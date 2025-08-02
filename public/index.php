@@ -1,79 +1,55 @@
-<!DOCTYPE html>
-<html lang="lt">
-<head>
-    <meta charset="UTF-8">
-    <title>Įmonių statistika</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { font-family: Arial; margin: 20px; }
-        table { border-collapse: collapse; width: 100%; margin-bottom: 30px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f4f4f4; }
-    </style>
-</head>
-<body>
-
-<h1>Įmonių sąrašas</h1>
-
 <?php
-// Paprasti testiniai duomenys
-$companies = [
-    ["name" => "UAB Alfa", "city" => "Vilnius", "profit" => 12000],
-    ["name" => "MB Beta", "city" => "Kaunas", "profit" => -3000],
-    ["name" => "UAB Gama", "city" => "Klaipėda", "profit" => 0],
-    ["name" => "UAB Delta", "city" => "Vilnius", "profit" => 800],
-    ["name" => "MB Omega", "city" => "Kaunas", "profit" => -1200],
-];
 
-// Skaičiavimai
-$profitable = 0;
-$loss = 0;
+use Illuminate\Contracts\Http\Kernel;
+use Illuminate\Http\Request;
 
-foreach ($companies as $c) {
-    if ($c["profit"] > 0) $profitable++;
-    else $loss++;
+define('LARAVEL_START', microtime(true));
+
+/*
+|--------------------------------------------------------------------------
+| Check If The Application Is Under Maintenance
+|--------------------------------------------------------------------------
+|
+| If the application is in maintenance / demo mode via the "down" command
+| we will load this file so that any pre-rendered content can be shown
+| instead of starting the framework, which could cause an exception.
+|
+*/
+
+if (file_exists($maintenance = __DIR__.'/../storage/framework/maintenance.php')) {
+    require $maintenance;
 }
-?>
 
-<table>
-    <tr>
-        <th>Pavadinimas</th>
-        <th>Miestas</th>
-        <th>Pelnas (€)</th>
-    </tr>
-    <?php foreach ($companies as $company): ?>
-        <tr>
-            <td><?= htmlspecialchars($company["name"]) ?></td>
-            <td><?= htmlspecialchars($company["city"]) ?></td>
-            <td><?= $company["profit"] ?></td>
-        </tr>
-    <?php endforeach; ?>
-</table>
+/*
+|--------------------------------------------------------------------------
+| Register The Auto Loader
+|--------------------------------------------------------------------------
+|
+| Composer provides a convenient, automatically generated class loader for
+| this application. We just need to utilize it! We'll simply require it
+| into the script here so we don't need to manually load our classes.
+|
+*/
 
-<h2>Pelnas / Nuostolis</h2>
-<canvas id="profitChart" width="400" height="200"></canvas>
+require __DIR__.'/../vendor/autoload.php';
 
-<script>
-    const ctx = document.getElementById('profitChart');
-    new Chart(ctx, {
-        type: 'pie',
-        data: {
-            labels: ['Pelningos įmonės', 'Nuostolingos įmonės'],
-            datasets: [{
-                data: [<?= $profitable ?>, <?= $loss ?>],
-                backgroundColor: ['#4CAF50', '#F44336']
-            }]
-        },
-        options: {
-            responsive: true,
-            plugins: {
-                legend: {
-                    position: 'bottom'
-                }
-            }
-        }
-    });
-</script>
+/*
+|--------------------------------------------------------------------------
+| Run The Application
+|--------------------------------------------------------------------------
+|
+| Once we have the application, we can handle the incoming request using
+| the application's HTTP kernel. Then, we will send the response back
+| to this client's browser, allowing them to enjoy our application.
+|
+*/
 
-</body>
-</html>
+$app = require_once __DIR__.'/../bootstrap/app.php';
+
+$kernel = $app->make(Kernel::class);
+
+$response = $kernel->handle(
+    $request = Request::capture()
+)->send();
+
+$kernel->terminate($request, $response);
